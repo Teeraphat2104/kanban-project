@@ -2,6 +2,9 @@
 
 import { useState } from "react"
 import { useUpdateColumn, useDeleteColumn } from "@/hooks/use-columns"
+import { useCards } from "@/hooks/use-cards"
+import { CardItem } from "./CardItem"
+import { CardDialog } from "./CardDialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -16,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, Plus } from "lucide-react"
 import type { Column } from "@/types"
 
 export function BoardColumn({ column, boardId }: { column: Column; boardId: string }) {
@@ -25,6 +28,7 @@ export function BoardColumn({ column, boardId }: { column: Column; boardId: stri
   const [deleteOpen, setDeleteOpen] = useState(false)
   const updateColumn = useUpdateColumn()
   const deleteColumn = useDeleteColumn()
+  const { data: cards, isLoading } = useCards(column.id)
 
   const handleRename = async () => {
     if (title.trim() && title !== column.title) {
@@ -32,6 +36,10 @@ export function BoardColumn({ column, boardId }: { column: Column; boardId: stri
     }
     setEditing(false)
   }
+
+  const nextPosition = cards?.length
+    ? Math.max(...cards.map((c) => c.position)) + 1
+    : 0
 
   return (
     <div className="flex w-72 shrink-0 flex-col gap-3">
@@ -54,28 +62,45 @@ export function BoardColumn({ column, boardId }: { column: Column; boardId: stri
           </h3>
         )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Button variant="ghost" size="icon-sm">
-              <MoreHorizontal className="size-4" />
+        <div className="flex items-center gap-1">
+          <CardDialog columnId={column.id} nextPosition={nextPosition}>
+            <Button variant="ghost" size="icon-xs">
+              <Plus className="size-4" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditing(true)}>
-              <Pencil className="mr-2 size-4" /> Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="mr-2 size-4" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </CardDialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <Button variant="ghost" size="icon-xs">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setEditing(true)}>
+                <Pencil className="mr-2 size-4" /> Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="mr-2 size-4" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2 rounded-lg bg-muted/50 p-2 min-h-[200px]">
-        {/* Cards will go here */}
+        {isLoading && (
+          <p className="text-xs text-muted-foreground">Loading...</p>
+        )}
+        {cards?.map((card) => (
+          <CardItem key={card.id} card={card} columnId={column.id} />
+        ))}
+        {cards?.length === 0 && (
+          <p className="py-4 text-center text-xs text-muted-foreground">
+            No cards yet
+          </p>
+        )}
       </div>
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
