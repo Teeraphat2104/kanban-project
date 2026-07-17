@@ -1,11 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import { format, isPast, isToday } from "date-fns"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { useTags, useCardTags } from "@/hooks/use-tags"
+import { useCardAssignees, useCurrentUser } from "@/hooks/use-assignees"
 import { CardDialog } from "./CardDialog"
 import { TagBadge } from "./TagBadge"
+import { CalendarIcon, UserIcon } from "lucide-react"
 import type { Card } from "@/types"
 
 export function CardItem({
@@ -20,6 +23,8 @@ export function CardItem({
   const [open, setOpen] = useState(false)
   const { data: allTags } = useTags(boardId)
   const { data: cardTagIds } = useCardTags(card.id)
+  const { data: assigneeIds } = useCardAssignees(card.id)
+  const { data: currentUser } = useCurrentUser()
 
   const {
     attributes,
@@ -37,6 +42,11 @@ export function CardItem({
   }
 
   const cardTags = allTags?.filter((t) => cardTagIds?.includes(t.id)) ?? []
+  const isAssigned = currentUser?.id ? assigneeIds?.includes(currentUser.id) : false
+
+  const dueDate = card.due_date ? new Date(card.due_date) : null
+  const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate)
+  const isDueToday = dueDate && isToday(dueDate)
 
   return (
     <>
@@ -54,6 +64,7 @@ export function CardItem({
             {card.description}
           </p>
         )}
+
         {cardTags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {cardTags.map((tag) => (
@@ -61,6 +72,33 @@ export function CardItem({
             ))}
           </div>
         )}
+
+        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+          {dueDate && (
+            <span
+              className={`inline-flex items-center gap-1 ${
+                isOverdue
+                  ? "text-destructive"
+                  : isDueToday
+                    ? "text-amber-500"
+                    : ""
+              }`}
+            >
+              <CalendarIcon className="size-3" />
+              {isToday(dueDate)
+                ? "Today"
+                : isPast(dueDate)
+                  ? format(dueDate, "MMM d")
+                  : format(dueDate, "MMM d")}
+            </span>
+          )}
+          {isAssigned && (
+            <span className="inline-flex items-center gap-1">
+              <UserIcon className="size-3" />
+              Me
+            </span>
+          )}
+        </div>
       </div>
       <CardDialog
         card={card}
