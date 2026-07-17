@@ -21,32 +21,45 @@ export function CardDialog({
   columnId,
   children,
   nextPosition,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: {
   card?: Card
   columnId: string
-  children: React.ReactNode
+  children?: React.ReactNode
   nextPosition?: number
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }) {
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
   const [title, setTitle] = useState(card?.title ?? "")
   const [description, setDescription] = useState(card?.description ?? "")
   const createCard = useCreateCard()
   const updateCard = useUpdateCard()
   const deleteCard = useDeleteCard()
 
+  const isControlled =
+    controlledOpen !== undefined && controlledOnOpenChange !== undefined
+  const open = isControlled ? controlledOpen : internalOpen
+  const setOpen = isControlled ? controlledOnOpenChange : setInternalOpen
+
   const isNew = !card
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isNew) {
+    if (isNew && nextPosition !== undefined) {
       await createCard.mutateAsync({
         column_id: columnId,
         title,
         description: description || undefined,
-        position: nextPosition ?? 0,
+        position: nextPosition,
       })
-    } else {
-      await updateCard.mutateAsync({ id: card.id, title, description: description || null } as any)
+    } else if (!isNew) {
+      await updateCard.mutateAsync({
+        id: card.id,
+        title,
+        description: description || null,
+      } as any)
     }
     setTitle("")
     setDescription("")
@@ -59,55 +72,80 @@ export function CardDialog({
     setOpen(false)
   }
 
+  const form = (
+    <form onSubmit={handleSubmit} className="grid gap-4">
+      <div className="grid gap-2">
+        <Label htmlFor="card-title">Title</Label>
+        <Input
+          id="card-title"
+          placeholder="Card title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="card-desc">Description</Label>
+        <Textarea
+          id="card-desc"
+          placeholder="Optional description..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+      <div className="flex justify-between">
+        {!isNew && (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleteCard.isPending}
+          >
+            Delete
+          </Button>
+        )}
+        <div className="ml-auto flex gap-2">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={createCard.isPending || updateCard.isPending}
+          >
+            {isNew ? "Create" : "Save"}
+          </Button>
+        </div>
+      </div>
+    </form>
+  )
+
+  if (children) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger>{children}</DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isNew ? "Create card" : "Edit card"}</DialogTitle>
+            {!isNew && (
+              <DialogDescription>Edit card details below.</DialogDescription>
+            )}
+          </DialogHeader>
+          {form}
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isNew ? "Create card" : "Edit card"}</DialogTitle>
-          {!isNew && <DialogDescription>Edit card details below.</DialogDescription>}
+          {!isNew && (
+            <DialogDescription>Edit card details below.</DialogDescription>
+          )}
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="card-title">Title</Label>
-            <Input
-              id="card-title"
-              placeholder="Card title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="card-desc">Description</Label>
-            <Textarea
-              id="card-desc"
-              placeholder="Optional description..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-between">
-            {!isNew && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={deleteCard.isPending}
-              >
-                Delete
-              </Button>
-            )}
-            <div className="ml-auto flex gap-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createCard.isPending || updateCard.isPending}>
-                {isNew ? "Create" : "Save"}
-              </Button>
-            </div>
-          </div>
-        </form>
+        {form}
       </DialogContent>
     </Dialog>
   )

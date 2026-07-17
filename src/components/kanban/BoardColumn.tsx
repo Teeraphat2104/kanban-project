@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { useSortable } from "@dnd-kit/sortable"
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { useUpdateColumn, useDeleteColumn } from "@/hooks/use-columns"
-import { useCards } from "@/hooks/use-cards"
 import { CardItem } from "./CardItem"
 import { CardDialog } from "./CardDialog"
 import { Button } from "@/components/ui/button"
@@ -20,15 +22,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Pencil, Trash2, Plus } from "lucide-react"
-import type { Column } from "@/types"
+import type { Column, Card } from "@/types"
 
-export function BoardColumn({ column, boardId }: { column: Column; boardId: string }) {
+export function BoardColumn({
+  column,
+  boardId,
+  cards,
+}: {
+  column: Column
+  boardId: string
+  cards: Card[]
+}) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(column.title)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const updateColumn = useUpdateColumn()
   const deleteColumn = useDeleteColumn()
-  const { data: cards, isLoading } = useCards(column.id)
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
 
   const handleRename = async () => {
     if (title.trim() && title !== column.title) {
@@ -37,13 +61,17 @@ export function BoardColumn({ column, boardId }: { column: Column; boardId: stri
     setEditing(false)
   }
 
-  const nextPosition = cards?.length
+  const nextPosition = cards.length
     ? Math.max(...cards.map((c) => c.position)) + 1
     : 0
 
   return (
-    <div className="flex w-72 shrink-0 flex-col gap-3">
-      <div className="flex items-center justify-between px-1">
+    <div ref={setNodeRef} style={style} className="flex w-72 shrink-0 flex-col gap-3">
+      <div
+        className="flex items-center justify-between px-1"
+        {...attributes}
+        {...listeners}
+      >
         {editing ? (
           <Input
             value={title}
@@ -90,13 +118,15 @@ export function BoardColumn({ column, boardId }: { column: Column; boardId: stri
       </div>
 
       <div className="flex flex-col gap-2 rounded-lg bg-muted/50 p-2 min-h-[200px]">
-        {isLoading && (
-          <p className="text-xs text-muted-foreground">Loading...</p>
-        )}
-        {cards?.map((card) => (
-          <CardItem key={card.id} card={card} columnId={column.id} />
-        ))}
-        {cards?.length === 0 && (
+        <SortableContext
+          items={cards.map((c) => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {cards.map((card) => (
+            <CardItem key={card.id} card={card} columnId={column.id} />
+          ))}
+        </SortableContext>
+        {cards.length === 0 && (
           <p className="py-4 text-center text-xs text-muted-foreground">
             No cards yet
           </p>
@@ -109,7 +139,8 @@ export function BoardColumn({ column, boardId }: { column: Column; boardId: stri
             <DialogTitle>Delete column</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete &quot;{column.title}&quot;? All cards in this column will also be deleted.
+            Are you sure you want to delete &quot;{column.title}&quot;? All cards
+            in this column will also be deleted.
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>
