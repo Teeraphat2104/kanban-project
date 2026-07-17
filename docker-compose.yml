@@ -1,0 +1,159 @@
+services:
+  nextjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deps
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      kong:
+        condition: service_healthy
+    networks:
+      - kanban
+
+  supabase-db:
+    image: supabase/postgres:15.8.1.031
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - kanban
+
+  supabase-auth:
+    image: supabase/gotrue:v2.164.0
+    ports:
+      - "9999:9999"
+    environment:
+      GOTRUE_API_HOST: "0.0.0.0"
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_DB_DRIVER: "postgres"
+      GOTRUE_DB_DATABASE_URL: "postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@supabase-db:5432/postgres"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_LOG_LEVEL: "INFO"
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - kanban
+
+  supabase-rest:
+    image: supabase/postgrest:v12.2.0
+    ports:
+      - "3001:3000"
+    environment:
+      PGRST_DB_URI: "postgres://authenticator:${POSTGRES_PASSWORD}@supabase-db:5432/postgres"
+      PGRST_DB_SCHEMAS: "public,storage,graphql_public"
+      PGRST_DB_ANON_ROLE: "anon"
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_OPENAPI_SERVER_PROXY_URI: "http://localhost:3000"
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - kanban
+
+  supabase-realtime:
+    image: supabase/realtime:v2.30.10
+    ports:
+      - "4000:4000"
+    environment:
+      DB_HOST: supabase-db
+      DB_PORT: "5432"
+      DB_USER: "supabase_admin"
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: "postgres"
+      DB_AFTER_CONNECT_QUERY: "SET session_preload_libraries = 'supabase_vault'"
+      DB_ENC_KEY: "supabaserealtime"
+      JWT_SECRET: ${JWT_SECRET}
+      REPLICATION_MODE: "stream"
+      REPLICATION_POLL_INTERVAL: "100"
+      SECURE_CHANNELS: "false"
+      SLOT_NAME: "supabase_realtime_replication_slot"
+      TEMPORARY_SLOT: "true"
+      PORT: "4000"
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - kanban
+
+  supabase-meta:
+    image: supabase/postgres-meta:v0.84.2
+    ports:
+      - "5555:8080"
+    environment:
+      PG_META_DB_HOST: supabase-db
+      PG_META_DB_PORT: "5432"
+      PG_META_DB_NAME: "postgres"
+      PG_META_DB_USER: "supabase_admin"
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - kanban
+
+  supabase-studio:
+    image: supabase/studio:20250101-1c9a35f
+    ports:
+      - "8080:8080"
+    environment:
+      STUDIO_PG_META_URL: "http://supabase-meta:8080"
+      SUPABASE_URL: "http://localhost:8000"
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      - supabase-meta
+    restart: unless-stopped
+    networks:
+      - kanban
+
+  kong:
+    image: supabase/kong:2.8.1
+    ports:
+      - "8000:8000"
+    environment:
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_DATABASE: "off"
+    volumes:
+      - ./docker/kong/kong.yml:/etc/kong/kong.yml:ro
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - kanban
+
+volumes:
+  db-data:
+
+networks:
+  kanban:
+    driver: bridge
