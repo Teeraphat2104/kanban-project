@@ -27,8 +27,11 @@ import { useSearchParams } from "next/navigation"
 import { BoardColumn } from "./BoardColumn"
 import { CreateColumnDialog } from "./CreateColumnDialog"
 import { BoardSearch } from "./BoardSearch"
+import { useBoardRealtime } from "@/hooks/use-realtime"
 
 export function KanbanBoard({ boardId }: { boardId: string }) {
+  useBoardRealtime(boardId)
+
   const { data: board, isLoading: boardLoading } = useBoard(boardId)
   const { data: columns, isLoading: colsLoading } = useColumns(boardId)
   const { data: allCards, isLoading: cardsLoading } = useBoardCards(boardId)
