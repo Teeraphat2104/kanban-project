@@ -1,3 +1,5 @@
+import { KanbanBoard } from "@/components/kanban/KanbanBoard"
+
 export default async function BoardDetailPage({
   params,
 }: {
@@ -5,9 +7,5 @@ export default async function BoardDetailPage({
 }) {
   const { boardId } = await params
 
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Board: {boardId}</h1>
-    </div>
-  )
+  return <KanbanBoard boardId={boardId} />
 }
