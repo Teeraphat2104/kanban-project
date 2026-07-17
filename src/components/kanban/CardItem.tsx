@@ -3,11 +3,23 @@
 import { useState } from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { useTags, useCardTags } from "@/hooks/use-tags"
 import { CardDialog } from "./CardDialog"
+import { TagBadge } from "./TagBadge"
 import type { Card } from "@/types"
 
-export function CardItem({ card, columnId }: { card: Card; columnId: string }) {
+export function CardItem({
+  card,
+  columnId,
+  boardId,
+}: {
+  card: Card
+  columnId: string
+  boardId: string
+}) {
   const [open, setOpen] = useState(false)
+  const { data: allTags } = useTags(boardId)
+  const { data: cardTagIds } = useCardTags(card.id)
 
   const {
     attributes,
@@ -23,6 +35,8 @@ export function CardItem({ card, columnId }: { card: Card; columnId: string }) {
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
+
+  const cardTags = allTags?.filter((t) => cardTagIds?.includes(t.id)) ?? []
 
   return (
     <>
@@ -40,10 +54,18 @@ export function CardItem({ card, columnId }: { card: Card; columnId: string }) {
             {card.description}
           </p>
         )}
+        {cardTags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {cardTags.map((tag) => (
+              <TagBadge key={tag.id} tag={tag} />
+            ))}
+          </div>
+        )}
       </div>
       <CardDialog
         card={card}
         columnId={columnId}
+        boardId={boardId}
         open={open}
         onOpenChange={setOpen}
       />

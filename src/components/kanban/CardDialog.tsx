@@ -14,11 +14,13 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { TagSelector } from "./TagSelector"
 import type { Card } from "@/types"
 
 export function CardDialog({
   card,
   columnId,
+  boardId,
   children,
   nextPosition,
   open: controlledOpen,
@@ -26,6 +28,7 @@ export function CardDialog({
 }: {
   card?: Card
   columnId: string
+  boardId?: string
   children?: React.ReactNode
   nextPosition?: number
   open?: boolean
@@ -93,6 +96,9 @@ export function CardDialog({
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
+      {!isNew && boardId && card && (
+        <TagSelector boardId={boardId} cardId={card.id} />
+      )}
       <div className="flex justify-between">
         {!isNew && (
           <Button
@@ -119,34 +125,30 @@ export function CardDialog({
     </form>
   )
 
+  const content = (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{isNew ? "Create card" : "Edit card"}</DialogTitle>
+        {!isNew && (
+          <DialogDescription>Edit card details below.</DialogDescription>
+        )}
+      </DialogHeader>
+      {form}
+    </DialogContent>
+  )
+
   if (children) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger>{children}</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isNew ? "Create card" : "Edit card"}</DialogTitle>
-            {!isNew && (
-              <DialogDescription>Edit card details below.</DialogDescription>
-            )}
-          </DialogHeader>
-          {form}
-        </DialogContent>
+        {content}
       </Dialog>
     )
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{isNew ? "Create card" : "Edit card"}</DialogTitle>
-          {!isNew && (
-            <DialogDescription>Edit card details below.</DialogDescription>
-          )}
-        </DialogHeader>
-        {form}
-      </DialogContent>
+      {content}
     </Dialog>
   )
 }

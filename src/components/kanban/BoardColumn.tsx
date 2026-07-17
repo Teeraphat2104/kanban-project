@@ -91,7 +91,7 @@ export function BoardColumn({
         )}
 
         <div className="flex items-center gap-1">
-          <CardDialog columnId={column.id} nextPosition={nextPosition}>
+          <CardDialog columnId={column.id} boardId={boardId} nextPosition={nextPosition}>
             <Button variant="ghost" size="icon-xs">
               <Plus className="size-4" />
             </Button>
@@ -123,7 +123,7 @@ export function BoardColumn({
           strategy={verticalListSortingStrategy}
         >
           {cards.map((card) => (
-            <CardItem key={card.id} card={card} columnId={column.id} />
+            <CardItem key={card.id} card={card} columnId={column.id} boardId={boardId} />
           ))}
         </SortableContext>
         {cards.length === 0 && (
