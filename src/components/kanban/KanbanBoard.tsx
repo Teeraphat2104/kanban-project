@@ -23,8 +23,10 @@ import { useColumns } from "@/hooks/use-columns"
 import { useBoardCards } from "@/hooks/use-cards"
 import { useUpdateCard } from "@/hooks/use-cards"
 import { useUpdateColumn } from "@/hooks/use-columns"
+import { useSearchParams } from "next/navigation"
 import { BoardColumn } from "./BoardColumn"
 import { CreateColumnDialog } from "./CreateColumnDialog"
+import { BoardSearch } from "./BoardSearch"
 
 export function KanbanBoard({ boardId }: { boardId: string }) {
   const { data: board, isLoading: boardLoading } = useBoard(boardId)
@@ -39,11 +41,18 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
     useSensor(KeyboardSensor)
   )
 
+  const searchParams = useSearchParams()
+  const q = searchParams.get("q")?.toLowerCase() ?? ""
+
+  const filteredCards = q
+    ? (allCards ?? []).filter((c) => c.title.toLowerCase().includes(q))
+    : (allCards ?? [])
+
   const cardsByColumn = new Map<string, typeof allCards>()
   columns?.forEach((col) => {
     cardsByColumn.set(
       col.id,
-      (allCards ?? []).filter((c) => c.column_id === col.id)
+      filteredCards.filter((c) => c.column_id === col.id)
     )
   })
 
@@ -158,14 +167,17 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
       onDragEnd={handleDragEnd}
     >
       <div className="p-6">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">{board.title}</h1>
             {board.description && (
               <p className="text-sm text-muted-foreground">{board.description}</p>
             )}
           </div>
-          <CreateColumnDialog boardId={boardId} nextPosition={nextPosition} />
+          <div className="flex items-center gap-2">
+            <BoardSearch boardId={boardId} />
+            <CreateColumnDialog boardId={boardId} nextPosition={nextPosition} />
+          </div>
         </div>
 
         <SortableContext
