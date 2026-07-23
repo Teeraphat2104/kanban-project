@@ -27,7 +27,7 @@ export default function RegisterPage() {
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -36,12 +36,30 @@ export default function RegisterPage() {
     })
 
     if (error) {
+      if (error.message.includes("already registered")) {
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (loginError) {
+          setError("Account exists but login failed. Please try signing in.")
+          setLoading(false)
+          return
+        }
+        window.location.href = "/boards"
+        return
+      }
       setError(error.message)
       setLoading(false)
       return
     }
 
-    window.location.href = "/boards"
+    if (data.user) {
+      window.location.href = "/boards"
+    } else {
+      setError("Check your email to confirm your account.")
+      setLoading(false)
+    }
   }
 
   return (

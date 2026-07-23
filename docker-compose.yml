@@ -16,6 +16,7 @@ services:
       - NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_URL=http://kong:8000
     depends_on:
       kong:
         condition: service_healthy
@@ -23,7 +24,7 @@ services:
       - kanban
 
   supabase-db:
-    image: supabase/postgres:15.8.1.031
+    image: supabase/postgres:17.6.1.136
     ports:
       - "5432:5432"
     environment:
@@ -39,11 +40,11 @@ services:
       - kanban
 
   supabase-auth:
-    image: supabase/gotrue:v2.164.0
+    image: supabase/gotrue:v2.189.0
     ports:
       - "9999:9999"
     environment:
-      GOTRUE_API_HOST: "0.0.0.0"
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL}
       GOTRUE_SITE_URL: ${SITE_URL}
       GOTRUE_JWT_SECRET: ${JWT_SECRET}
       GOTRUE_DB_DRIVER: "postgres"
@@ -51,6 +52,7 @@ services:
       GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
       GOTRUE_MAILER_AUTOCONFIRM: "true"
       GOTRUE_LOG_LEVEL: "INFO"
+      PORT: "9999"
     depends_on:
       supabase-db:
         condition: service_healthy
@@ -59,7 +61,7 @@ services:
       - kanban
 
   supabase-rest:
-    image: supabase/postgrest:v12.2.0
+    image: postgrest/postgrest:v12.2.0
     ports:
       - "3001:3000"
     environment:
@@ -76,7 +78,7 @@ services:
       - kanban
 
   supabase-realtime:
-    image: supabase/realtime:v2.30.10
+    image: supabase/realtime:v2.102.3
     ports:
       - "4000:4000"
     environment:
@@ -88,12 +90,15 @@ services:
       DB_AFTER_CONNECT_QUERY: "SET session_preload_libraries = 'supabase_vault'"
       DB_ENC_KEY: "supabaserealtime"
       JWT_SECRET: ${JWT_SECRET}
+      SECRET_KEY_BASE: ${REALTIME_SECRET_KEY_BASE}
       REPLICATION_MODE: "stream"
       REPLICATION_POLL_INTERVAL: "100"
       SECURE_CHANNELS: "false"
       SLOT_NAME: "supabase_realtime_replication_slot"
       TEMPORARY_SLOT: "true"
       PORT: "4000"
+      METRICS_JWT_SECRET: ${JWT_SECRET}
+      APP_NAME: "supabase-realtime"
     depends_on:
       supabase-db:
         condition: service_healthy
@@ -102,7 +107,7 @@ services:
       - kanban
 
   supabase-meta:
-    image: supabase/postgres-meta:v0.84.2
+    image: supabase/postgres-meta:v0.96.6
     ports:
       - "5555:8080"
     environment:
@@ -119,7 +124,7 @@ services:
       - kanban
 
   supabase-studio:
-    image: supabase/studio:20250101-1c9a35f
+    image: supabase/studio:2026.07.07-sha-a6a04f2
     ports:
       - "8080:8080"
     environment:
@@ -134,7 +139,7 @@ services:
       - kanban
 
   kong:
-    image: supabase/kong:2.8.1
+    image: kong/kong:3.9.1
     ports:
       - "8000:8000"
     environment:
