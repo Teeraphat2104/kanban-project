@@ -13,59 +13,30 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-const ERROR_MAP: Record<string, string> = {
-  "User already registered": "An account with this email already exists. Try signing in instead.",
-  "Signup requires a valid password": "Password must be at least 6 characters.",
-  "Unable to validate email address: invalid format": "Please enter a valid email address.",
-}
-
-function getErrorMessage(msg: string): string {
-  for (const [key, value] of Object.entries(ERROR_MAP)) {
-    if (msg.includes(key)) return value
-  }
-  return msg
-}
-
-export default function RegisterPage() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const supabase = createClient()
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setSuccess(false)
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     })
 
     if (error) {
-      setError(getErrorMessage(error.message))
+      setError(error.message)
       setLoading(false)
       return
     }
 
-    if (data.user?.identities?.length === 0) {
-      setError("An account with this email already exists. Try signing in instead.")
-      setLoading(false)
-      return
-    }
-
-    if (data.session) {
-      window.location.href = "/boards"
-    } else {
-      setSuccess(true)
-      setLoading(false)
-    }
+    setSuccess(true)
+    setLoading(false)
   }
 
   if (success) {
@@ -75,7 +46,7 @@ export default function RegisterPage() {
           <CardHeader>
             <CardTitle>Check your email</CardTitle>
             <CardDescription>
-              We sent a confirmation link to <strong>{email}</strong>. Click the link to activate your account.
+              We sent a password reset link to <strong>{email}</strong>. Check your inbox and click the link.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -92,11 +63,11 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Create account</CardTitle>
-          <CardDescription>Enter your email to create an account</CardDescription>
+          <CardTitle>Forgot password?</CardTitle>
+          <CardDescription>Enter your email and we&apos;ll send you a reset link</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleRegister} className="grid gap-4">
+          <form onSubmit={handleReset} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -108,27 +79,15 @@ export default function RegisterPage() {
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="At least 6 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                minLength={6}
-                required
-              />
-            </div>
             {error && (
               <p className="text-sm font-medium text-destructive">{error}</p>
             )}
             <Button type="submit" disabled={loading}>
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? "Sending..." : "Send reset link"}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            Remember your password?{" "}
             <a href="/login" className="underline underline-offset-4 hover:text-foreground">
               Sign in
             </a>

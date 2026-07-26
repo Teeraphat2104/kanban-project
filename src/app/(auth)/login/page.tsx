@@ -1,7 +1,5 @@
 "use client"
 
-export const dynamic = "force-dynamic"
-
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -14,6 +12,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+
+const ERROR_MAP: Record<string, string> = {
+  "Invalid login credentials": "Invalid email or password. Please try again.",
+  "Email not confirmed": "Please confirm your email before signing in.",
+  "Too many requests": "Too many attempts. Please try again later.",
+}
+
+function getErrorMessage(msg: string): string {
+  for (const [key, value] of Object.entries(ERROR_MAP)) {
+    if (msg.includes(key)) return value
+  }
+  return msg
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -33,7 +44,7 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setError(error.message)
+      setError(getErrorMessage(error.message))
       setLoading(false)
       return
     }
@@ -62,7 +73,12 @@ export default function LoginPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <a href="/forgot-password" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+                  Forgot password?
+                </a>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -71,7 +87,9 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <p className="text-sm font-medium text-destructive">{error}</p>
+            )}
             <Button type="submit" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </Button>

@@ -10,15 +10,8 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const supabase = await createClient()
-  
-  // Debug: check cookies
-  const cookieStore = await cookies()
-  const allCookies = cookieStore.getAll()
-  console.log("[DASHBOARD LAYOUT] Cookies:", JSON.stringify(allCookies.map(c => c.name)))
-  
+
   const { data: { user }, error } = await supabase.auth.getUser()
-  console.log("[DASHBOARD LAYOUT] getUser error:", error?.message)
-  console.log("[DASHBOARD LAYOUT] user:", user ? user.email : "NULL")
 
   if (!user) {
     redirect("/login")
