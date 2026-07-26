@@ -30,9 +30,7 @@ export function CreateBoardDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button>New Board</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button />}>New Board</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create board</DialogTitle>

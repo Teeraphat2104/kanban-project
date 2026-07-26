@@ -27,9 +27,7 @@ export function CreateColumnDialog({ boardId, nextPosition }: { boardId: string;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button variant="outline" size="sm">+ Add Column</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button variant="outline" size="sm" />}>+ Add Column</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add column</DialogTitle>

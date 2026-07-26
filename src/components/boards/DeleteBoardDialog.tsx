@@ -23,11 +23,7 @@ export function DeleteBoardDialog({ boardId }: { boardId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button variant="destructive" size="sm">
-          Delete
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button variant="destructive" size="sm" />}>Delete</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete board</DialogTitle>

@@ -33,11 +33,7 @@ export function EditBoardDialog({ board }: { board: Board }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button variant="outline" size="sm">
-          Edit
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button variant="outline" size="sm" />}>Edit</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit board</DialogTitle>
