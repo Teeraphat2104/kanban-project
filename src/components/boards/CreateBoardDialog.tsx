@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -30,7 +29,7 @@ export function CreateBoardDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button />}>New Board</DialogTrigger>
+      <Button onClick={() => setOpen(true)}>New Board</Button>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create board</DialogTitle>

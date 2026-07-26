@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 
 export function DeleteBoardDialog({ boardId }: { boardId: string }) {
@@ -23,7 +22,7 @@ export function DeleteBoardDialog({ boardId }: { boardId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="destructive" size="sm" />}>Delete</DialogTrigger>
+      <Button variant="destructive" size="sm" onClick={() => setOpen(true)}>Delete</Button>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete board</DialogTitle>

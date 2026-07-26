@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -33,7 +32,7 @@ export function EditBoardDialog({ board }: { board: Board }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" size="sm" />}>Edit</DialogTrigger>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>Edit</Button>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit board</DialogTitle>

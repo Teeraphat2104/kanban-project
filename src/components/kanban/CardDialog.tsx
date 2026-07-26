@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { useCreateCard, useUpdateCard, useDeleteCard } from "@/hooks/use-cards"
@@ -25,7 +25,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { TagSelector } from "./TagSelector"
 import type { Card } from "@/types"
@@ -224,7 +223,7 @@ export function CardDialog({
   if (children) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger>{children}</DialogTrigger>
+        {React.cloneElement(children as React.ReactElement, { onClick: () => setOpen(true) })}
         {content}
       </Dialog>
     )

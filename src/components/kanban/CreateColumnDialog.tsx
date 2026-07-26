@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,7 +26,7 @@ export function CreateColumnDialog({ boardId, nextPosition }: { boardId: string;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" size="sm" />}>+ Add Column</DialogTrigger>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>+ Add Column</Button>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add column</DialogTitle>
